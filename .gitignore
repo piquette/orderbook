@@ -1,0 +1,8 @@
+NOTES.md
+vendor
+*.exe
+bin
+.DS_Store
+.env
+*.test
+*.coverprofile
