@@ -147,8 +147,8 @@ func (b *Book) matchBid(bidPrice, bidSize uint) (uint, []Execution) {
 		if potentialmatch.size <= remaining {
 			// Fill existing order and remove from order map.
 			remaining -= potentialmatch.size
-			b.bestAsk.orders.remove(0)
 			delete(b.orderMap, potentialmatch.id)
+			b.bestAsk.orders.remove(0)
 			matches = append(matches, Execution{
 				OrderID:           potentialmatch.id,
 				FilledQuantity:    potentialmatch.size,
@@ -183,7 +183,7 @@ func (b *Book) matchAsk(askPrice, askSize uint) (uint, []Execution) {
 		potentialmatch := b.bestBid.orders.first
 		if potentialmatch == nil {
 			// No orders left at this price. advance to the next limit price.
-			next := b.bestBid.higher()
+			next := b.bestBid.lower()
 			b.bidTree.removeLimit(b.bestBid.price)
 			delete(b.bidMap, b.bestBid.price)
 			b.bestBid = next
@@ -193,8 +193,8 @@ func (b *Book) matchAsk(askPrice, askSize uint) (uint, []Execution) {
 		if potentialmatch.size <= remaining {
 			// Fill existing bid order and remove from map.
 			remaining -= potentialmatch.size
-			b.bestBid.orders.remove(0)
 			delete(b.orderMap, potentialmatch.id)
+			b.bestBid.orders.remove(0)
 			matches = append(matches, Execution{
 				OrderID:           potentialmatch.id,
 				FilledQuantity:    potentialmatch.size,
@@ -216,18 +216,57 @@ func (b *Book) matchAsk(askPrice, askSize uint) (uint, []Execution) {
 }
 
 // Cancel order.
-func (*Book) Cancel(ID OrderID) {
+func (b *Book) Cancel(id OrderID) (bool, error) {
 
-	// General methodology:
-	//
 	// Check existence in map and return if not in.
-	// Remove order from orders map.
-	// Remove order from its doubly-linked list.
+	order, orderExists := b.orderMap[id]
+	if !orderExists {
+		return false, errors.New("order does not exist")
+	}
+
+	p := order.price
+	s := order.side
+
+	// Remove order from orders map and remove order from its list.
+	var (
+		lim         *limitPrice
+		priceExists bool
+	)
+	if s == Bid {
+		lim, priceExists = b.bidMap[p]
+	} else {
+		lim, priceExists = b.askMap[p]
+	}
+	if !priceExists {
+		return false, errors.New("price does not exist, this is should not happen")
+	}
+
+	delete(b.orderMap, id)
+	lim.orders.removeID(id)
+
 	// If that order was the last in its price level, remove that price level
 	// from the price level map and from the bid/ask tree.
-	// If that removed price level was the best bid/ask, the best bid/ask need to
-	// be replaced with the next best, which is the price level's parent in the tree.
-
+	//
+	// If a removed price level is the best bid/ask, the best bid/ask need to
+	// be replaced with the next best.
+	if lim.orders.Size() == 0 {
+		if s == Bid {
+			//
+			if b.bestBid.price == p {
+				b.bestBid = b.bestBid.lower()
+			}
+			delete(b.bidMap, p)
+			b.bidTree.removeLimit(p)
+		} else {
+			//
+			if b.bestAsk.price == p {
+				b.bestAsk = b.bestAsk.higher()
+			}
+			delete(b.askMap, p)
+			b.askTree.removeLimit(p)
+		}
+	}
+	return true, nil
 }
 
 // Top of the book.

@@ -17,7 +17,7 @@ There are some architectural caveats (simplifications) that are made here to kee
 * Market orders and advanced order type logic is ignored, every order must be submitted at a specific price.
 
 
-## Operations
+## Book operations
 * Submit Order
 * Cancel Order
 * Get Top of Book

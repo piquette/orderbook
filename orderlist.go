@@ -69,6 +69,36 @@ func (list *orderList) get(index int) (*order, bool) {
 	return element, true
 }
 
+func (list *orderList) removeID(id OrderID) {
+
+	var element *order
+
+	element = list.first
+	for {
+		if element.id == id {
+			break
+		}
+		element = element.next
+	}
+
+	if element == list.first {
+		list.first = element.next
+	}
+	if element == list.last {
+		list.last = element.prev
+	}
+	if element.prev != nil {
+		element.prev.next = element.next
+	}
+	if element.next != nil {
+		element.next.prev = element.prev
+	}
+
+	element = nil
+
+	list.size--
+}
+
 // Remove removes the element at the given index from the list.
 func (list *orderList) remove(index int) {
 
