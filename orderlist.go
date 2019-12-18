@@ -5,7 +5,6 @@ type orderList struct {
 	first *order
 	last  *order
 	size  int
-	limit *limitPrice
 }
 
 // New instantiates a new list and adds the passed values, if any, to the list

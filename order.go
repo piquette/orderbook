@@ -2,7 +2,6 @@ package orderbook
 
 import (
 	"math/rand"
-	"time"
 )
 
 // OrderID is an order id.
@@ -19,14 +18,12 @@ const Ask Side = true
 
 // order is a single order in the book.
 type order struct {
-	id        OrderID
-	side      Side
-	price     uint
-	size      uint
-	timeStamp time.Time
-	next      *order
-	prev      *order
-	list      *orderList
+	id    OrderID
+	side  Side
+	price uint
+	size  uint
+	next  *order
+	prev  *order
 }
 
 // genID returns a psuedo-random 8-digit order id.
